@@ -1,0 +1,8 @@
+node_modules/
+coverage/
+out/
+.env.local
+.env
+*.js.map
+build/
+.cache/
