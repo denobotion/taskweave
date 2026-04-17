@@ -47,7 +47,16 @@ export async function runTasks(
           return;
         }
 
-        const result = await executeCommand(task.command, ctx);
+        let result;
+        try {
+          result = await executeCommand(task.command, ctx);
+        } catch (err) {
+          markTask(schedule, task.name, 'failed');
+          const message = err instanceof Error ? err.message : String(err);
+          results.push({ name: task.name, status: 'failed', error: message });
+          return;
+        }
+
         if (result.exitCode === 0) {
           markTask(schedule, task.name, 'done');
           mergeContext(ctx, { outputs: { [task.name]: result.stdout } });
