@@ -15,7 +15,14 @@ export function loadTaskFile(filePath: string): LoadResult {
   let raw: string;
   try {
     raw = readFileSync(resolved, 'utf-8');
-  } catch {
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code === 'ENOENT') {
+      throw new Error(`Task file not found: ${resolved}`);
+    }
+    if (code === 'EACCES') {
+      throw new Error(`Permission denied reading task file: ${resolved}`);
+    }
     throw new Error(`Cannot read task file: ${resolved}`);
   }
 
