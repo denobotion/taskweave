@@ -1,35 +1,30 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const ConditionSchema = z.object({
-  key: z.string(),
-  op: z.enum(['eq', 'neq', 'gt', 'lt', 'contains']),
-  value: z.union([z.string(), z.number(), z.boolean()]),
+export const StepSchema = z.object({
+  name: z.string(),
+  run: z.string(),
+  condition: z.string().optional(),
+  retries: z.number().int().min(0).default(0),
+  timeout: z.string().optional(),
+  continueOnError: z.boolean().default(false),
 });
 
-export const RetrySchema = z.object({
-  attempts: z.number().int().min(1).default(1),
-  delay: z.union([z.string(), z.number()]).optional(),
-  backoff: z.enum(['fixed', 'exponential']).default('fixed'),
-});
-
-export const TaskSchema = z.object({
-  id: z.string().min(1),
-  command: z.string().min(1),
+export const TaskDefinitionSchema = z.object({
+  name: z.string(),
   description: z.string().optional(),
-  depends: z.array(z.string()).default([]),
-  inputs: z.record(z.string()).optional(),
-  condition: ConditionSchema.optional(),
-  retry: RetrySchema.optional(),
-  timeout: z.union([z.string(), z.number()]).optional(),
-  env: z.record(z.string()).optional(),
+  inputs: z.record(z.string(), z.string()).optional(),
+  env: z.record(z.string(), z.string()).optional(),
+  secrets: z.array(z.string()).optional(),
+  steps: z.array(StepSchema),
+  dependsOn: z.array(z.string()).optional(),
+  watch: z.array(z.string()).optional(),
+  cache: z
+    .object({
+      key: z.string(),
+      paths: z.array(z.string()),
+    })
+    .optional(),
 });
 
-export const TaskFileSchema = z.object({
-  version: z.string().default('1'),
-  tasks: z.array(TaskSchema).min(1),
-});
-
-export type Condition = z.infer<typeof ConditionSchema>;
-export type Retry = z.infer<typeof RetrySchema>;
-export type Task = z.infer<typeof TaskSchema>;
-export type TaskFile = z.infer<typeof TaskFileSchema>;
+export type StepDefinition = z.infer<typeof StepSchema>;
+export type TaskDefinition = z.infer<typeof TaskDefinitionSchema>;
