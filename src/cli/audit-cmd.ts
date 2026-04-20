@@ -32,6 +32,20 @@ function printAuditLog(log: AuditLog, verbose: boolean): void {
   }
 }
 
+/**
+ * Validates that a parsed object has the minimum shape required to be an AuditLog.
+ * Catches cases where the file exists but contains unrelated JSON.
+ */
+function isValidAuditLog(value: unknown): value is AuditLog {
+  if (typeof value !== "object" || value === null) return false;
+  const obj = value as Record<string, unknown>;
+  return (
+    typeof obj["runId"] === "string" &&
+    typeof obj["startedAt"] === "number" &&
+    Array.isArray(obj["events"])
+  );
+}
+
 export function runAuditCmd(args: string[]): void {
   const verbose = args.includes("--verbose") || args.includes("-v");
   const fileArg = args.find((a) => !a.startsWith("-"));
@@ -44,7 +58,12 @@ export function runAuditCmd(args: string[]): void {
 
   let log: AuditLog;
   try {
-    log = JSON.parse(readFileSync(filePath, "utf-8")) as AuditLog;
+    const parsed: unknown = JSON.parse(readFileSync(filePath, "utf-8"));
+    if (!isValidAuditLog(parsed)) {
+      console.error("Audit file does not contain a valid audit log.");
+      process.exit(1);
+    }
+    log = parsed;
   } catch {
     console.error("Failed to parse audit file.");
     process.exit(1);
