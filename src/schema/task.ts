@@ -1,11 +1,17 @@
 import { z } from "zod";
 
+/** Duration string pattern, e.g. "30s", "5m", "1h" */
+const DurationSchema = z.string().regex(
+  /^\d+(\.\d+)?(ms|s|m|h)$/,
+  "Invalid duration format. Expected a number followed by ms, s, m, or h (e.g. '30s', '5m', '1h')"
+);
+
 export const StepSchema = z.object({
   name: z.string(),
   run: z.string(),
   condition: z.string().optional(),
   retries: z.number().int().min(0).default(0),
-  timeout: z.string().optional(),
+  timeout: DurationSchema.optional(),
   continueOnError: z.boolean().default(false),
 });
 
