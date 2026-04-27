@@ -41,6 +41,24 @@ export function getTaskTraces(
   return filterTraceEvents(store, (e) => e.taskId === taskId);
 }
 
+/**
+ * Returns a summary of trace counts grouped by status for a given task,
+ * or across all tasks if no taskId is provided.
+ */
+export function getTraceSummaryStats(
+  store: TraceStore,
+  taskId?: string
+): Record<string, number> {
+  const events = taskId
+    ? filterTraceEvents(store, (e) => e.taskId === taskId)
+    : filterTraceEvents(store, () => true);
+
+  return events.reduce<Record<string, number>>((acc, e) => {
+    acc[e.status] = (acc[e.status] ?? 0) + 1;
+    return acc;
+  }, {});
+}
+
 export function printTraceSummary(
   store: TraceStore,
   taskId?: string
