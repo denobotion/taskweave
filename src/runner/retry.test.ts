@@ -59,4 +59,12 @@ describe('withRetry', () => {
     expect(result.success).toBe(false);
     expect(result.error).toBeInstanceOf(Error);
   });
+
+  it('respects maxAttempts of 1 (no retries)', async () => {
+    const fn = vi.fn().mockRejectedValue(new Error('fail'));
+    const result = await withRetry(fn, { maxAttempts: 1 });
+    expect(result.success).toBe(false);
+    expect(result.attempts).toBe(1);
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
 });
