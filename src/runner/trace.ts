@@ -45,13 +45,14 @@ export function closeTrace(
   meta?: Record<string, unknown>
 ): TraceEvent {
   const endKind = openEvent.kind.replace(':start', ':end') as TraceEventKind;
+  const now = Date.now();
   const event: TraceEvent = {
     id: randomUUID(),
     traceId: store.traceId,
     kind: endKind,
     taskId: openEvent.taskId,
-    timestamp: Date.now(),
-    durationMs: Date.now() - openEvent.timestamp,
+    timestamp: now,
+    durationMs: now - openEvent.timestamp,
     meta,
   };
   store.events.push(event);
@@ -70,4 +71,15 @@ export function formatTraceLine(event: TraceEvent): string {
   if (event.taskId) parts.push(`task=${event.taskId}`);
   if (event.durationMs !== undefined) parts.push(`duration=${event.durationMs}ms`);
   return parts.join(' ');
+}
+
+/**
+ * Returns a summary of the trace store, including total event counts grouped by kind.
+ */
+export function summarizeTrace(store: TraceStore): Record<string, number> {
+  const summary: Record<string, number> = {};
+  for (const event of store.events) {
+    summary[event.kind] = (summary[event.kind] ?? 0) + 1;
+  }
+  return summary;
 }
