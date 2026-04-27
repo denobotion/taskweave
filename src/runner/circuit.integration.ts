@@ -56,3 +56,12 @@ export function formatCircuitStatus(store: CircuitStore, taskId: string): string
     eta > 0 ? ` retry_in=${Math.ceil(eta / 1000)}s` : ""
   }`;
 }
+
+/**
+ * Resets the circuit breaker for a given task, removing it from the store so
+ * it will be re-initialised in a closed state on the next access. Useful for
+ * manual operator intervention or test teardown.
+ */
+export function resetBreaker(store: CircuitStore, taskId: string): void {
+  store.breakers.delete(taskId);
+}
