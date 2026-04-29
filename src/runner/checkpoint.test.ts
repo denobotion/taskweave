@@ -34,6 +34,12 @@ test("recordCheckpoint adds entry", () => {
   expect(store.entries["taskA"].outputHash).toBeDefined();
 });
 
+test("recordCheckpoint without output leaves outputHash undefined", () => {
+  let store = createCheckpointStore("run-1");
+  store = recordCheckpoint(store, "taskA", "completed");
+  expect(store.entries["taskA"].outputHash).toBeUndefined();
+});
+
 test("isTaskCheckpointed returns true for completed tasks", () => {
   let store = createCheckpointStore("run-1");
   store = recordCheckpoint(store, "taskA", "completed");
@@ -67,4 +73,8 @@ test("clearCheckpoint removes the file", () => {
   expect(fs.existsSync(fp)).toBe(true);
   clearCheckpoint(tmpDir, "run-99");
   expect(fs.existsSync(fp)).toBe(false);
+});
+
+test("clearCheckpoint on missing file does not throw", () => {
+  expect(() => clearCheckpoint(tmpDir, "does-not-exist")).not.toThrow();
 });
