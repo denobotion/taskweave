@@ -19,6 +19,10 @@ describe("createBarrier", () => {
   it("throws for count < 1", () => {
     expect(() => createBarrier(0)).toThrow(RangeError);
   });
+
+  it("throws for negative count", () => {
+    expect(() => createBarrier(-1)).toThrow(RangeError);
+  });
 });
 
 describe("arriveAtBarrier", () => {
@@ -31,6 +35,13 @@ describe("arriveAtBarrier", () => {
     const b = createBarrier(2);
     arriveAtBarrier(b, "task-a");
     expect(arriveAtBarrier(b, "task-a")).toBe(false);
+  });
+
+  it("tracks multiple distinct task arrivals", () => {
+    const b = createBarrier(3);
+    arriveAtBarrier(b, "task-a");
+    arriveAtBarrier(b, "task-b");
+    expect(b.arrived.size).toBe(2);
   });
 });
 
@@ -70,6 +81,17 @@ describe("waitForBarrier / releaseBarrier", () => {
     const b = createBarrier(2);
     expect(releaseBarrier(b)).toBe(0);
   });
+
+  it("resolves multiple concurrent waiters", async () => {
+    const b = createBarrier(2);
+    const p1 = waitForBarrier(b);
+    const p2 = waitForBarrier(b);
+    arriveAtBarrier(b, "task-a");
+    arriveAtBarrier(b, "task-b");
+    const released = releaseBarrier(b);
+    expect(released).toBe(2);
+    await expect(Promise.all([p1, p2])).resolves.toBeDefined();
+  });
 });
 
 describe("resetBarrier", () => {
@@ -78,6 +100,15 @@ describe("resetBarrier", () => {
     arriveAtBarrier(b, "task-a");
     resetBarrier(b);
     expect(b.arrived.size).toBe(0);
+  });
+
+  it("allows tasks to arrive again after reset", () => {
+    const b = createBarrier(2);
+    arriveAtBarrier(b, "task-a");
+    arriveAtBarrier(b, "task-b");
+    resetBarrier(b);
+    expect(arriveAtBarrier(b, "task-a")).toBe(true);
+    expect(isBarrierReached(b)).toBe(false);
   });
 });
 
